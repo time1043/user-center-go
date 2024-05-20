@@ -19,15 +19,69 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	RealWorld_SayHello_FullMethodName = "/realworld.v1.RealWorld/SayHello"
+	RealWorld_Login_FullMethodName             = "/realworld.v1.RealWorld/Login"
+	RealWorld_Register_FullMethodName          = "/realworld.v1.RealWorld/Register"
+	RealWorld_GetCurrentUser_FullMethodName    = "/realworld.v1.RealWorld/GetCurrentUser"
+	RealWorld_UpdateUser_FullMethodName        = "/realworld.v1.RealWorld/UpdateUser"
+	RealWorld_GetProfile_FullMethodName        = "/realworld.v1.RealWorld/GetProfile"
+	RealWorld_FollowUser_FullMethodName        = "/realworld.v1.RealWorld/FollowUser"
+	RealWorld_UnfollowUser_FullMethodName      = "/realworld.v1.RealWorld/UnfollowUser"
+	RealWorld_ListArticles_FullMethodName      = "/realworld.v1.RealWorld/ListArticles"
+	RealWorld_FeedArticles_FullMethodName      = "/realworld.v1.RealWorld/FeedArticles"
+	RealWorld_GetArticle_FullMethodName        = "/realworld.v1.RealWorld/GetArticle"
+	RealWorld_CreateArticle_FullMethodName     = "/realworld.v1.RealWorld/CreateArticle"
+	RealWorld_UpdateArticle_FullMethodName     = "/realworld.v1.RealWorld/UpdateArticle"
+	RealWorld_DeleteArticle_FullMethodName     = "/realworld.v1.RealWorld/DeleteArticle"
+	RealWorld_AddComment_FullMethodName        = "/realworld.v1.RealWorld/AddComment"
+	RealWorld_GetComments_FullMethodName       = "/realworld.v1.RealWorld/GetComments"
+	RealWorld_DeleteComment_FullMethodName     = "/realworld.v1.RealWorld/DeleteComment"
+	RealWorld_FavoriteArticle_FullMethodName   = "/realworld.v1.RealWorld/FavoriteArticle"
+	RealWorld_UnfavoriteArticle_FullMethodName = "/realworld.v1.RealWorld/UnfavoriteArticle"
+	RealWorld_GetTags_FullMethodName           = "/realworld.v1.RealWorld/GetTags"
 )
 
 // RealWorldClient is the client API for RealWorld service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type RealWorldClient interface {
-	// Sends a greeting
-	SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error)
+	// Login
+	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*UserReply, error)
+	// Register
+	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*UserReply, error)
+	// Get current user profile
+	GetCurrentUser(ctx context.Context, in *GetCurrentUserRequest, opts ...grpc.CallOption) (*UserReply, error)
+	// Update user profile
+	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserReply, error)
+	// Get profile
+	GetProfile(ctx context.Context, in *GetProfileRequest, opts ...grpc.CallOption) (*ProfileReply, error)
+	// Follow user
+	FollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*ProfileReply, error)
+	// Unfollow user
+	UnfollowUser(ctx context.Context, in *UnfollowUserRequest, opts ...grpc.CallOption) (*ProfileReply, error)
+	// List articles
+	ListArticles(ctx context.Context, in *ListArticlesRequest, opts ...grpc.CallOption) (*MultipleArticlesReply, error)
+	// Feed articles
+	FeedArticles(ctx context.Context, in *FeedArticlesRequest, opts ...grpc.CallOption) (*MultipleArticlesReply, error)
+	// Get article
+	GetArticle(ctx context.Context, in *GetArticleRequest, opts ...grpc.CallOption) (*SingleArticleReply, error)
+	// Create article
+	CreateArticle(ctx context.Context, in *CreateArticleRequest, opts ...grpc.CallOption) (*SingleArticleReply, error)
+	// Update article
+	UpdateArticle(ctx context.Context, in *UpdateArticleRequest, opts ...grpc.CallOption) (*SingleArticleReply, error)
+	// Delete article
+	DeleteArticle(ctx context.Context, in *DeleteArticleRequest, opts ...grpc.CallOption) (*EmptyReply, error)
+	// Add comment to an article
+	AddComment(ctx context.Context, in *AddCommentRequest, opts ...grpc.CallOption) (*SingleCommentReply, error)
+	// Get comments from an article
+	GetComments(ctx context.Context, in *GetCommentsRequest, opts ...grpc.CallOption) (*MultipleCommentsReply, error)
+	// Delete comment from an article
+	DeleteComment(ctx context.Context, in *DeleteCommentRequest, opts ...grpc.CallOption) (*EmptyReply, error)
+	// Favorite article
+	FavoriteArticle(ctx context.Context, in *FavoriteArticleRequest, opts ...grpc.CallOption) (*SingleArticleReply, error)
+	// Unfavorite article
+	UnfavoriteArticle(ctx context.Context, in *UnfavoriteArticleRequest, opts ...grpc.CallOption) (*SingleArticleReply, error)
+	// Get tags
+	GetTags(ctx context.Context, in *GetTagsRequest, opts ...grpc.CallOption) (*TagListReply, error)
 }
 
 type realWorldClient struct {
@@ -38,9 +92,171 @@ func NewRealWorldClient(cc grpc.ClientConnInterface) RealWorldClient {
 	return &realWorldClient{cc}
 }
 
-func (c *realWorldClient) SayHello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloReply, error) {
-	out := new(HelloReply)
-	err := c.cc.Invoke(ctx, RealWorld_SayHello_FullMethodName, in, out, opts...)
+func (c *realWorldClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*UserReply, error) {
+	out := new(UserReply)
+	err := c.cc.Invoke(ctx, RealWorld_Login_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*UserReply, error) {
+	out := new(UserReply)
+	err := c.cc.Invoke(ctx, RealWorld_Register_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) GetCurrentUser(ctx context.Context, in *GetCurrentUserRequest, opts ...grpc.CallOption) (*UserReply, error) {
+	out := new(UserReply)
+	err := c.cc.Invoke(ctx, RealWorld_GetCurrentUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UserReply, error) {
+	out := new(UserReply)
+	err := c.cc.Invoke(ctx, RealWorld_UpdateUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) GetProfile(ctx context.Context, in *GetProfileRequest, opts ...grpc.CallOption) (*ProfileReply, error) {
+	out := new(ProfileReply)
+	err := c.cc.Invoke(ctx, RealWorld_GetProfile_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) FollowUser(ctx context.Context, in *FollowUserRequest, opts ...grpc.CallOption) (*ProfileReply, error) {
+	out := new(ProfileReply)
+	err := c.cc.Invoke(ctx, RealWorld_FollowUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) UnfollowUser(ctx context.Context, in *UnfollowUserRequest, opts ...grpc.CallOption) (*ProfileReply, error) {
+	out := new(ProfileReply)
+	err := c.cc.Invoke(ctx, RealWorld_UnfollowUser_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) ListArticles(ctx context.Context, in *ListArticlesRequest, opts ...grpc.CallOption) (*MultipleArticlesReply, error) {
+	out := new(MultipleArticlesReply)
+	err := c.cc.Invoke(ctx, RealWorld_ListArticles_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) FeedArticles(ctx context.Context, in *FeedArticlesRequest, opts ...grpc.CallOption) (*MultipleArticlesReply, error) {
+	out := new(MultipleArticlesReply)
+	err := c.cc.Invoke(ctx, RealWorld_FeedArticles_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) GetArticle(ctx context.Context, in *GetArticleRequest, opts ...grpc.CallOption) (*SingleArticleReply, error) {
+	out := new(SingleArticleReply)
+	err := c.cc.Invoke(ctx, RealWorld_GetArticle_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) CreateArticle(ctx context.Context, in *CreateArticleRequest, opts ...grpc.CallOption) (*SingleArticleReply, error) {
+	out := new(SingleArticleReply)
+	err := c.cc.Invoke(ctx, RealWorld_CreateArticle_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) UpdateArticle(ctx context.Context, in *UpdateArticleRequest, opts ...grpc.CallOption) (*SingleArticleReply, error) {
+	out := new(SingleArticleReply)
+	err := c.cc.Invoke(ctx, RealWorld_UpdateArticle_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) DeleteArticle(ctx context.Context, in *DeleteArticleRequest, opts ...grpc.CallOption) (*EmptyReply, error) {
+	out := new(EmptyReply)
+	err := c.cc.Invoke(ctx, RealWorld_DeleteArticle_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) AddComment(ctx context.Context, in *AddCommentRequest, opts ...grpc.CallOption) (*SingleCommentReply, error) {
+	out := new(SingleCommentReply)
+	err := c.cc.Invoke(ctx, RealWorld_AddComment_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) GetComments(ctx context.Context, in *GetCommentsRequest, opts ...grpc.CallOption) (*MultipleCommentsReply, error) {
+	out := new(MultipleCommentsReply)
+	err := c.cc.Invoke(ctx, RealWorld_GetComments_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) DeleteComment(ctx context.Context, in *DeleteCommentRequest, opts ...grpc.CallOption) (*EmptyReply, error) {
+	out := new(EmptyReply)
+	err := c.cc.Invoke(ctx, RealWorld_DeleteComment_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) FavoriteArticle(ctx context.Context, in *FavoriteArticleRequest, opts ...grpc.CallOption) (*SingleArticleReply, error) {
+	out := new(SingleArticleReply)
+	err := c.cc.Invoke(ctx, RealWorld_FavoriteArticle_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) UnfavoriteArticle(ctx context.Context, in *UnfavoriteArticleRequest, opts ...grpc.CallOption) (*SingleArticleReply, error) {
+	out := new(SingleArticleReply)
+	err := c.cc.Invoke(ctx, RealWorld_UnfavoriteArticle_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *realWorldClient) GetTags(ctx context.Context, in *GetTagsRequest, opts ...grpc.CallOption) (*TagListReply, error) {
+	out := new(TagListReply)
+	err := c.cc.Invoke(ctx, RealWorld_GetTags_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +267,44 @@ func (c *realWorldClient) SayHello(ctx context.Context, in *HelloRequest, opts .
 // All implementations must embed UnimplementedRealWorldServer
 // for forward compatibility
 type RealWorldServer interface {
-	// Sends a greeting
-	SayHello(context.Context, *HelloRequest) (*HelloReply, error)
+	// Login
+	Login(context.Context, *LoginRequest) (*UserReply, error)
+	// Register
+	Register(context.Context, *RegisterRequest) (*UserReply, error)
+	// Get current user profile
+	GetCurrentUser(context.Context, *GetCurrentUserRequest) (*UserReply, error)
+	// Update user profile
+	UpdateUser(context.Context, *UpdateUserRequest) (*UserReply, error)
+	// Get profile
+	GetProfile(context.Context, *GetProfileRequest) (*ProfileReply, error)
+	// Follow user
+	FollowUser(context.Context, *FollowUserRequest) (*ProfileReply, error)
+	// Unfollow user
+	UnfollowUser(context.Context, *UnfollowUserRequest) (*ProfileReply, error)
+	// List articles
+	ListArticles(context.Context, *ListArticlesRequest) (*MultipleArticlesReply, error)
+	// Feed articles
+	FeedArticles(context.Context, *FeedArticlesRequest) (*MultipleArticlesReply, error)
+	// Get article
+	GetArticle(context.Context, *GetArticleRequest) (*SingleArticleReply, error)
+	// Create article
+	CreateArticle(context.Context, *CreateArticleRequest) (*SingleArticleReply, error)
+	// Update article
+	UpdateArticle(context.Context, *UpdateArticleRequest) (*SingleArticleReply, error)
+	// Delete article
+	DeleteArticle(context.Context, *DeleteArticleRequest) (*EmptyReply, error)
+	// Add comment to an article
+	AddComment(context.Context, *AddCommentRequest) (*SingleCommentReply, error)
+	// Get comments from an article
+	GetComments(context.Context, *GetCommentsRequest) (*MultipleCommentsReply, error)
+	// Delete comment from an article
+	DeleteComment(context.Context, *DeleteCommentRequest) (*EmptyReply, error)
+	// Favorite article
+	FavoriteArticle(context.Context, *FavoriteArticleRequest) (*SingleArticleReply, error)
+	// Unfavorite article
+	UnfavoriteArticle(context.Context, *UnfavoriteArticleRequest) (*SingleArticleReply, error)
+	// Get tags
+	GetTags(context.Context, *GetTagsRequest) (*TagListReply, error)
 	mustEmbedUnimplementedRealWorldServer()
 }
 
@@ -60,8 +312,62 @@ type RealWorldServer interface {
 type UnimplementedRealWorldServer struct {
 }
 
-func (UnimplementedRealWorldServer) SayHello(context.Context, *HelloRequest) (*HelloReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SayHello not implemented")
+func (UnimplementedRealWorldServer) Login(context.Context, *LoginRequest) (*UserReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedRealWorldServer) Register(context.Context, *RegisterRequest) (*UserReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
+}
+func (UnimplementedRealWorldServer) GetCurrentUser(context.Context, *GetCurrentUserRequest) (*UserReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCurrentUser not implemented")
+}
+func (UnimplementedRealWorldServer) UpdateUser(context.Context, *UpdateUserRequest) (*UserReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (UnimplementedRealWorldServer) GetProfile(context.Context, *GetProfileRequest) (*ProfileReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProfile not implemented")
+}
+func (UnimplementedRealWorldServer) FollowUser(context.Context, *FollowUserRequest) (*ProfileReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FollowUser not implemented")
+}
+func (UnimplementedRealWorldServer) UnfollowUser(context.Context, *UnfollowUserRequest) (*ProfileReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnfollowUser not implemented")
+}
+func (UnimplementedRealWorldServer) ListArticles(context.Context, *ListArticlesRequest) (*MultipleArticlesReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListArticles not implemented")
+}
+func (UnimplementedRealWorldServer) FeedArticles(context.Context, *FeedArticlesRequest) (*MultipleArticlesReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FeedArticles not implemented")
+}
+func (UnimplementedRealWorldServer) GetArticle(context.Context, *GetArticleRequest) (*SingleArticleReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetArticle not implemented")
+}
+func (UnimplementedRealWorldServer) CreateArticle(context.Context, *CreateArticleRequest) (*SingleArticleReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateArticle not implemented")
+}
+func (UnimplementedRealWorldServer) UpdateArticle(context.Context, *UpdateArticleRequest) (*SingleArticleReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateArticle not implemented")
+}
+func (UnimplementedRealWorldServer) DeleteArticle(context.Context, *DeleteArticleRequest) (*EmptyReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteArticle not implemented")
+}
+func (UnimplementedRealWorldServer) AddComment(context.Context, *AddCommentRequest) (*SingleCommentReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddComment not implemented")
+}
+func (UnimplementedRealWorldServer) GetComments(context.Context, *GetCommentsRequest) (*MultipleCommentsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetComments not implemented")
+}
+func (UnimplementedRealWorldServer) DeleteComment(context.Context, *DeleteCommentRequest) (*EmptyReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteComment not implemented")
+}
+func (UnimplementedRealWorldServer) FavoriteArticle(context.Context, *FavoriteArticleRequest) (*SingleArticleReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FavoriteArticle not implemented")
+}
+func (UnimplementedRealWorldServer) UnfavoriteArticle(context.Context, *UnfavoriteArticleRequest) (*SingleArticleReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnfavoriteArticle not implemented")
+}
+func (UnimplementedRealWorldServer) GetTags(context.Context, *GetTagsRequest) (*TagListReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTags not implemented")
 }
 func (UnimplementedRealWorldServer) mustEmbedUnimplementedRealWorldServer() {}
 
@@ -76,20 +382,344 @@ func RegisterRealWorldServer(s grpc.ServiceRegistrar, srv RealWorldServer) {
 	s.RegisterService(&RealWorld_ServiceDesc, srv)
 }
 
-func _RealWorld_SayHello_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HelloRequest)
+func _RealWorld_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(RealWorldServer).SayHello(ctx, in)
+		return srv.(RealWorldServer).Login(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: RealWorld_SayHello_FullMethodName,
+		FullMethod: RealWorld_Login_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(RealWorldServer).SayHello(ctx, req.(*HelloRequest))
+		return srv.(RealWorldServer).Login(ctx, req.(*LoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).Register(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_Register_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).Register(ctx, req.(*RegisterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_GetCurrentUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCurrentUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).GetCurrentUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_GetCurrentUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).GetCurrentUser(ctx, req.(*GetCurrentUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).UpdateUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_UpdateUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).UpdateUser(ctx, req.(*UpdateUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_GetProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProfileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).GetProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_GetProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).GetProfile(ctx, req.(*GetProfileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_FollowUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FollowUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).FollowUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_FollowUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).FollowUser(ctx, req.(*FollowUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_UnfollowUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnfollowUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).UnfollowUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_UnfollowUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).UnfollowUser(ctx, req.(*UnfollowUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_ListArticles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListArticlesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).ListArticles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_ListArticles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).ListArticles(ctx, req.(*ListArticlesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_FeedArticles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FeedArticlesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).FeedArticles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_FeedArticles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).FeedArticles(ctx, req.(*FeedArticlesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_GetArticle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetArticleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).GetArticle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_GetArticle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).GetArticle(ctx, req.(*GetArticleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_CreateArticle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateArticleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).CreateArticle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_CreateArticle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).CreateArticle(ctx, req.(*CreateArticleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_UpdateArticle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateArticleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).UpdateArticle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_UpdateArticle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).UpdateArticle(ctx, req.(*UpdateArticleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_DeleteArticle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteArticleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).DeleteArticle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_DeleteArticle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).DeleteArticle(ctx, req.(*DeleteArticleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_AddComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).AddComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_AddComment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).AddComment(ctx, req.(*AddCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_GetComments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCommentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).GetComments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_GetComments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).GetComments(ctx, req.(*GetCommentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_DeleteComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).DeleteComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_DeleteComment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).DeleteComment(ctx, req.(*DeleteCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_FavoriteArticle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FavoriteArticleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).FavoriteArticle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_FavoriteArticle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).FavoriteArticle(ctx, req.(*FavoriteArticleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_UnfavoriteArticle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnfavoriteArticleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).UnfavoriteArticle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_UnfavoriteArticle_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).UnfavoriteArticle(ctx, req.(*UnfavoriteArticleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RealWorld_GetTags_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTagsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RealWorldServer).GetTags(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RealWorld_GetTags_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RealWorldServer).GetTags(ctx, req.(*GetTagsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -102,8 +732,80 @@ var RealWorld_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*RealWorldServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "SayHello",
-			Handler:    _RealWorld_SayHello_Handler,
+			MethodName: "Login",
+			Handler:    _RealWorld_Login_Handler,
+		},
+		{
+			MethodName: "Register",
+			Handler:    _RealWorld_Register_Handler,
+		},
+		{
+			MethodName: "GetCurrentUser",
+			Handler:    _RealWorld_GetCurrentUser_Handler,
+		},
+		{
+			MethodName: "UpdateUser",
+			Handler:    _RealWorld_UpdateUser_Handler,
+		},
+		{
+			MethodName: "GetProfile",
+			Handler:    _RealWorld_GetProfile_Handler,
+		},
+		{
+			MethodName: "FollowUser",
+			Handler:    _RealWorld_FollowUser_Handler,
+		},
+		{
+			MethodName: "UnfollowUser",
+			Handler:    _RealWorld_UnfollowUser_Handler,
+		},
+		{
+			MethodName: "ListArticles",
+			Handler:    _RealWorld_ListArticles_Handler,
+		},
+		{
+			MethodName: "FeedArticles",
+			Handler:    _RealWorld_FeedArticles_Handler,
+		},
+		{
+			MethodName: "GetArticle",
+			Handler:    _RealWorld_GetArticle_Handler,
+		},
+		{
+			MethodName: "CreateArticle",
+			Handler:    _RealWorld_CreateArticle_Handler,
+		},
+		{
+			MethodName: "UpdateArticle",
+			Handler:    _RealWorld_UpdateArticle_Handler,
+		},
+		{
+			MethodName: "DeleteArticle",
+			Handler:    _RealWorld_DeleteArticle_Handler,
+		},
+		{
+			MethodName: "AddComment",
+			Handler:    _RealWorld_AddComment_Handler,
+		},
+		{
+			MethodName: "GetComments",
+			Handler:    _RealWorld_GetComments_Handler,
+		},
+		{
+			MethodName: "DeleteComment",
+			Handler:    _RealWorld_DeleteComment_Handler,
+		},
+		{
+			MethodName: "FavoriteArticle",
+			Handler:    _RealWorld_FavoriteArticle_Handler,
+		},
+		{
+			MethodName: "UnfavoriteArticle",
+			Handler:    _RealWorld_UnfavoriteArticle_Handler,
+		},
+		{
+			MethodName: "GetTags",
+			Handler:    _RealWorld_GetTags_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
