@@ -1,17 +1,29 @@
 # kratos
 
-- Refence 
+- Reference 
 
-  [Kratos (bilibili)](https://space.bilibili.com/1885628842), 
+  [Kratos (bilibili)](https://space.bilibili.com/1885628842), [Windfarer / kratos-realworld (github)](https://github.com/Windfarer/kratos-realworld), [beer-shop](https://github.com/go-kratos/beer-shop/), 
 
   [Kratos org](https://go-kratos.dev/), [Kratos (github)](https://github.com/go-kratos/kratos), [Kratos WX](https://mp.weixin.qq.com/s/Wm1pHZAbybHV6BLqDWEPVA), [Kratos engineering](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzAwNzgwMzY2Ng==&action=getalbum&album_id=1816622127303753730&scene=126&sessionid=-1820420947&uin=&key=&devicetype=Windows+11+x64&version=63090a13&lang=zh_CN&ascene=0), 
 
-  [gothinkster / realworld](https://github.com/gothinkster/realworld), [realworld docs](https://realworld-docs.netlify.app/docs/specs/backend-specs/introduction/),
+  [gothinkster / realworld](https://github.com/gothinkster/realworld), [realworld docs](https://realworld-docs.netlify.app/docs/specs/backend-specs/introduction/), 
+  
+- Reference - dev
+
+  [OpenAPI Swagger 使用](https://go-kratos.dev/docs/guide/openapi/), [Swagger UI](https://github.com/swagger-api/swagger-ui), 
+
+  [Ent 数据库框架使用](https://go-kratos.dev/docs/guide/ent), [gorm docs](https://gorm.io/docs/), 
+
+  
 
 
 
+- Introduction
 
+  基于Kratos框架实现社交化日志平台（类似medium.com）的案例完整开发流程，适合未接触过Kratos框架的同学。
 
+  跟随本教程可以沉浸式体验到Kratos框架的正确使用姿势，了解框架的常用组件的用法，以及项目结构的设计思路
+  
 - Overview
 
   供前端 (浏览器) 使用的 web应用
@@ -31,15 +43,39 @@
 
 
 
-- 项目开发
-
-  [OpenAPI Swagger 使用](https://go-kratos.dev/docs/guide/openapi/), [Swagger UI](https://github.com/swagger-api/swagger-ui)
-
-  
-
-
-
 ## 项目创建与介绍
+
+- 盘点名词
+
+  contorl, service, mapper
+
+  dto, vo, pojo, bo, dao, do
+
+- 分层架构
+
+  contorl: 
+
+  service: 
+
+  mapper: 
+
+- 具体对象
+
+  Data Transfer Object: 用于在不同层之间**传递数据**，它通常是可变的，并且不包含业务逻辑
+
+  Value Object: 用于**传递数据**，但通常是不可变的，用于表示值而不是实体
+
+  Plain Old Java Object: 普通的 Java 对象，可能被用于各种用途，包括表示实体、传递数据等
+
+  Business Object: 业务实体，通常包含**业务逻辑和行为**
+
+  Data Access Object: 封装数据访问逻辑，提供对数据源的抽象接口
+
+  Domain Objects: 
+
+
+
+
 
 ### 初始化项目
 
@@ -108,8 +144,8 @@
   
   ```
   
-- 项目结构  ([kratos docs](https://go-kratos.dev/docs/intro/layout), [kratos-layout](https://github.com/go-kratos/kratos-layout))
-
+  项目结构  ([kratos docs](https://go-kratos.dev/docs/intro/layout), [kratos-layout](https://github.com/go-kratos/kratos-layout))
+  
   ```
     .
   ├── Dockerfile  
@@ -168,7 +204,7 @@
           ├── README.md
           └── validate.proto
   ```
-
+  
   ![Snipaste_2024-05-20_07-42-31](res/Snipaste_2024-05-20_07-42-31.png)
   
   
@@ -213,8 +249,6 @@
 
 ## API定义与生成
 
-### 改名字
-
 - 改名字
 
   `api/realworld/v1/` (realworld.proto, error_reason.proto)
@@ -252,19 +286,17 @@
 
 
 
-### 写接口
+- 写接口  (postman 代码生成 ...)
 
-- 写接口  [kratos api](https://go-kratos.dev/docs/component/api)
+  [kratos api](https://go-kratos.dev/docs/component/api), [RealWorld User](https://realworld-docs.netlify.app/docs/specs/backend-specs/api-response-format#users-for-authentication), [json to protibuf](https://json-to-proto.github.io/); [protobuf synatx](https://protobuf.dev/programming-guides/proto3/)
 
-  postman 代码生成
+  api\realworld\v1\realworld.proto (接口) -> `make api`
 
+  internal\service\service.go (实现)  `kratos proto server api/realworld/v1/realworld.proto -t internal/service/`
 
+  openapi.yaml [Swagger Editor](https://editor.swagger.io/)
 
-
-
-
-
-
+  TODO 后续鉴权 ...
 
 
 
@@ -272,9 +304,141 @@
 
 ## 数据库接入与配置修改
 
+- 操作 ent [gorm](https://gorm.io/docs/)
+
+  ```bash
+  # mysql
+  mkdir -p deploy/docker && touch deploy/docker/docker-compose.yaml
+  
+  # https://github.com/go-kratos/beer-shop/blob/main/deploy/docker-compose/docker-compose.yaml
+  version: "3"
+  services:
+    rwdb:
+      image: mysql:8
+      environment:
+        MYSQL_ROOT_PASSWORD: 123456
+  
+  cd deploy/docker/ && docker-compose up -d
+  docker ps
+  docker exec -it docker-rwdb-1 bash
+  mysql -uroot -p123456
+  create database realworld;
+  
+  
+  # gorm, mysql driver
+  go get -u gorm.io/gorm
+  go get -u gorm.io/driver/mysql
+  
+  # go install entgo.io/ent/cmd/ent@latest
+  
+  ```
+
+- 编码
+
+  internal\data\data.go
+
+  ```go
+  package data
+  
+  import (
+  	"kratos-realworld/internal/conf"
+  
+  	"github.com/go-kratos/kratos/v2/log"
+  	"github.com/google/wire"
+  	"gorm.io/driver/mysql"
+  	"gorm.io/gorm"
+  )
+  
+  // ProviderSet is data providers.
+  var ProviderSet = wire.NewSet(NewData, NewDB, NewGreeterRepo)
+  
+  // Data .
+  type Data struct {
+  	// TODO wrapped database client
+  	db *gorm.DB
+  }
+  
+  // NewData 
+  func NewData(c *conf.Data, logger log.Logger, db *gorm.DB) (*Data, func(), error) {
+  	cleanup := func() {
+  		log.NewHelper(logger).Info("closing the data resources")
+  	}
+  	return &Data{db: db}, cleanup, nil
+  }
+  
+  func NewDB(c *conf.Data) *gorm.DB {
+  	db, err := gorm.Open(mysql.Open("root:123456@tcp(127.0.0.1:3307)/realworld?charset=utf8mb4&parseTime=True&loc=Local"), &gorm.Config{})
+  	if err != nil {
+  		panic("failed to connect database")
+  	}
+  
+  	if err := db.AutoMigrate(); err != nil {
+  		panic(err)
+  	}
+  	return db
+  }
+  
+  ```
+
+  internal\data\data_test.go
+
+  ```go
+  package data
+  
+  import "testing"
+  
+  func TestNewDB(t *testing.T) {
+  	NewDB(nil)
+  }
+  
+  ```
+
+  依赖注入
+
+  ```bash
+  make wire
+  
+  ```
+
+  
 
 
 
+- 配置信息封装
+
+  D:\code2\go-code\user-center-go\kratos-realworld\configs\config.yaml (配置信息)
+
+  ```go
+  data:
+    database:
+      dsn: root:123456@tcp(127.0.0.1:3307)/realworld?charset=utf8mb4&parseTime=True&loc=Local
+  
+  ```
+
+  D:\code2\go-code\user-center-go\kratos-realworld\internal\conf\conf.proto (解析)
+
+  ```go
+  message Data {
+    message Database {
+      string driver = 1;
+      string dsn = 2;
+    }
+    Database database = 1;
+  }
+  
+  ```
+
+  生成代码
+
+  ```bash
+  protoc --proto_path=./internal \
+         --proto_path=./third_party \
+         --go_out=paths=source_relative:./internal \
+         internal/conf/conf.proto 
+  
+  ```
+
+  
 
 
 
