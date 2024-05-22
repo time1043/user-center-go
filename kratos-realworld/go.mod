@@ -3,7 +3,9 @@ module kratos-realworld
 go 1.19
 
 require (
+	github.com/davecgh/go-spew v1.1.1
 	github.com/go-kratos/kratos/v2 v2.7.2
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/wire v0.5.0
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/automaxprocs v1.5.1
@@ -17,14 +19,12 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-kratos/aegis v0.2.0 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/form/v4 v4.2.1 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect

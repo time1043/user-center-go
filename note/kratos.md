@@ -14,7 +14,7 @@
 
   [Ent 数据库框架使用](https://go-kratos.dev/docs/guide/ent), [gorm docs](https://gorm.io/docs/), 
 
-  [jwt](https://jwt.io/), 
+  [jwt](https://jwt.io/), [jwt-go (github)](https://github.com/golang-jwt/jwt), 
   
   
 
@@ -881,6 +881,8 @@
 
 ## biz层开发 和自定义中间件
 
+### biz层开发 (未完成)
+
 - 需求
 
   不能明文存储用户密码 [golang.org/x/crypto bcrypt](https://pkg.go.dev/golang.org/x/crypto)
@@ -888,6 +890,7 @@
   ```bash
   go get golang.org/x/crypto
   go get github.com/golang-jwt/jwt/v4
+  go get github.com/davecgh/go-spew
   
   ```
   
@@ -1039,6 +1042,8 @@
 
 ---
 
+### 自定义中间件
+
 - Middleware  [Kratos docs](https://go-kratos.dev/docs/component/middleware/overview) 
 
   Kratos service Middleware (http, gprc)
@@ -1049,11 +1054,380 @@
 
 - 实现步骤
 
-  internal\server\http.go (需要注册服务)
+  internal\server\http.go (需要注册服务)  
 
-  internal\pkg\middleware\auth (中间件存放)
+  中间件的分流：有些地方要jwt 有些地方不用
 
+  参考demo：[NewWhiteListMatcher()](https://github.com/go-kratos/beer-shop/blob/b12402ebc618c4563e69757e65a6db4dd767a869/app/shop/interface/internal/server/http.go#L21)
 
+  ```go
+  func NewHTTPServer(c *conf.Server, jwtc *conf.JWT, greeter *service.RealWorldService, logger log.Logger) *http.Server {
+  	var opts = []http.ServerOption{
+  		http.Middleware(
+  			recovery.Recovery(),
+  			// auth.JWTAuthMiddleware(jwtc.Token),  // 需要分流
+  			selector.Server(auth.JWTAuthMiddleware(jwtc.Token)).Match(NewskipRoutersMatcher()).Build(),
+  		),
+  	}
+  	
+  
+  // --------------------------------------------------------------------------------------------------
+  func NewskipRoutersMatcher() selector.MatchFunc {
+  
+  	skipRouters := make(map[string]struct{})
+  	skipRouters["/realworld.v1.RealWorld/Login"] = struct{}{}
+  	skipRouters["/realworld.v1.RealWorld/Register"] = struct{}{}
+  	return func(ctx context.Context, operation string) bool {
+  		if _, ok := skipRouters[operation]; ok {
+  			return false
+  		}
+  		return true
+  	}
+  }
+  ```
+
+  internal\pkg\middleware\auth\auth.go (中间件编写)  
+
+  [Simple example of parsing and validating a token](https://pkg.go.dev/github.com/golang-jwt/jwt/v5#example-Parse-Hmac)
+
+  [Simple example of building and signing a token](https://pkg.go.dev/github.com/golang-jwt/jwt/v5#example-New-Hmac)
+
+  ```go
+  package auth
+  
+  import (
+  	"context"
+  	"errors"
+  	"fmt"
+  	"time"
+  
+  	"github.com/davecgh/go-spew/spew"
+  	"github.com/go-kratos/kratos/v2/middleware"
+  	"github.com/go-kratos/kratos/v2/transport"
+  	"github.com/golang-jwt/jwt/v4"
+  )
+  
+  func JTWAuthMiddleware() middleware.Middleware {
+  	return func(handler middleware.Handler) middleware.Handler {
+  		return func(ctx context.Context, req interface{}) (reply interface{}, err error) {
+  			if tr, ok := transport.FromServerContext(ctx); ok {
+  				tokenString := tr.RequestHeader().Get("Authorization")
+  				// spew.Dump(tokenString)
+  
+  				token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+  					// Don't forget to validate the alg is what you expect:
+  					if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+  						return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+  					}
+  					// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+  					return "secret", nil
+  				})
+  				if err != nil {
+  					return nil, err
+  				}
+  
+  				if claims, ok := token.Claims.(jwt.MapClaims); ok {
+  					fmt.Println(claims["foo"], claims["nbf"])
+  					spew.Dump(claims["userId"])
+  				} else {
+  					return nil, errors.New("invalid token")
+  				}
+  
+  			}
+  			return handler(ctx, req)
+  		}
+  	}
+  }
+  
+  // --------------------------------------------------------------------------------------------------
+  func GenerateToken() (string, error) {
+  	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+  		"userId": 1122,
+  		"nbf":    time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
+  	})
+  
+  	// Sign and get the complete encoded token as a string using the secret
+  	tokenString, err := token.SignedString("secret")
+  	if err != nil {
+  		panic(err)
+  	}
+  	return tokenString, nil
+  }
+  
+  ```
+
+- configs\config.yaml (配置信息)
+
+  ```yaml
+  jwt:
+    secret: "hello"
+  ```
+
+  internal\conf\conf.proto 
+
+  ```protobuf
+  message Bootstrap {
+    Server server = 1;
+    Data data = 2;
+    Jtw jwt = 3;
+  }
+  
+  
+  message JWT {
+    string token = 1;
+  }
+  
+  ```
+
+  生成代码
+
+  ```
+  # make config
+  protoc --proto_path=./internal \
+         --proto_path=./third_party \
+         --go_out=paths=source_relative:./internal \
+         ./internal/conf/conf.proto
+  
+  ```
+
+- cmd\kratos-realworld\main.go
+
+  ```go
+  	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Jwt, logger)
+  ```
+
+  cmd\kratos-realworld\wire.go
+
+  ```go
+  func wireApp(*conf.Server, *conf.Data, *conf.Jtw, log.Logger) (*kratos.App, func(), error) {
+  ```
+
+  生成代码
+
+  ```
+  make wire
+  
+  ```
+
+  internal\server\http.go
+
+  ```go
+  func NewHTTPServer(c *conf.Server, jwtc *conf.Jtw, greeter *service.RealWorldService, logger log.Logger) *http.Server {
+  	var opts = []http.ServerOption{
+  		http.Middleware(
+  			recovery.Recovery(),
+  			auth.JTWAuthMiddleware(jwtc.Token),
+  		),
+  	}
+  ```
+
+  ...
+
+- 写进去 
+
+  `JTWAuthMiddleware(secret string)`
+  
+  
+
+---
+
+- 分层架构
+
+  internal\service\user.go (服务调用层)
+
+  ```go
+  package service
+  
+  import (
+  	"context"
+  	v1 "kratos-realworld/api/realworld/v1"
+  )
+  
+  func (s *RealWorldService) Login(ctx context.Context, in *v1.LoginRequest) (*v1.UserReply, error) {
+  	u, err := s.uc.Login(ctx, in.User.Email, in.User.Password)
+  	if err != nil {
+  		return nil, err
+  	}
+  
+  	return &v1.UserReply{
+  		User: &v1.UserReply_User{
+  			Username: u.Username,
+  			Email:    u.Email,
+  			Bio:      u.Bio,
+  			Image:    u.Image,
+  			Token:    u.Token,
+  		},
+  	}, nil
+  }
+  
+  func (s *RealWorldService) Register(ctx context.Context, req *v1.RegisterRequest) (*v1.UserReply, error) {
+  	u, err := s.uc.Register(ctx, req.User.Username, req.User.Email, req.User.Password)
+  	if err != nil {
+  		return nil, err
+  	}
+  
+  	return &v1.UserReply{
+  		User: &v1.UserReply_User{
+  			Username: u.Username,
+  			Email:    u.Email,
+  			Bio:      u.Bio,
+  			Image:    u.Image,
+  			Token:    u.Token,
+  		},
+  	}, nil
+  }
+  
+  func (s *RealWorldService) GetCurrentUser(ctx context.Context, req *v1.GetCurrentUserRequest) (*v1.UserReply, error) {
+  	return &v1.UserReply{}, nil
+  }
+  
+  func (s *RealWorldService) UpdateUser(ctx context.Context, req *v1.UpdateUserRequest) (*v1.UserReply, error) {
+  	return &v1.UserReply{}, nil
+  }
+  
+  ```
+
+  internal\biz\user.go (业务逻辑层)
+
+  ```go
+  package biz
+  
+  import (
+  	"context"
+  	"errors"
+  	"kratos-realworld/internal/conf"
+  	"kratos-realworld/internal/pkg/middleware/auth"
+  
+  	"github.com/go-kratos/kratos/v2/log"
+  	"golang.org/x/crypto/bcrypt"
+  )
+  
+  type User struct {
+  	Email        string
+  	Username     string
+  	Bio          string
+  	Image        string
+  	PasswordHash string // 数据库不能明文存储密码
+  }
+  
+  type UserLogin struct {
+  	Email    string
+  	Username string
+  	Token    string
+  	Bio      string
+  	Image    string
+  }
+  
+  // --------------------------------------------------------------------------------------------------
+  type UserRepo interface {
+  	CreateUser(ctx context.Context, user *User) error
+  	GetUserByEmail(ctx context.Context, email string) (*User, error)
+  }
+  
+  type ProfileRepo interface {
+  }
+  
+  type UserUsecase struct {
+  	ur   UserRepo
+  	pr   ProfileRepo
+  	jwtc *conf.JWT
+  	log  *log.Helper
+  }
+  
+  func NewUserUsecase(ur UserRepo, pr ProfileRepo, jwtc *conf.JWT, logger log.Logger) *UserUsecase {
+  	return &UserUsecase{ur: ur, pr: pr, jwtc: jwtc, log: log.NewHelper(logger)}
+  }
+  
+  // --------------------------------------------------------------------------------------------------
+  func (uc *UserUsecase) Register(ctx context.Context, username, email, password string) (*UserLogin, error) {
+  	// 1. 参数校验 TODO
+  	if len(username) < 3 || len(username) > 20 {
+  		return nil, errors.New("username length must be between 3 and 20")
+  	}
+  	if len(email) < 3 || len(email) > 20 {
+  		return nil, errors.New("email length must be between 3 and 20")
+  	}
+  	if len(password) < 4 || len(password) > 20 {
+  		return nil, errors.New("password length must be between 4 and 20")
+  	}
+  
+  	// 用户是否存在
+  	if _, err := uc.ur.GetUserByEmail(ctx, email); err == nil {
+  		return nil, errors.New("email already exists")
+  	}
+  
+  	// 2. 创建用户 (加密密码)
+  	u := &User{
+  		Email:        email,
+  		Username:     username,
+  		PasswordHash: hashPassword(password),
+  	}
+  	if err := uc.ur.CreateUser(ctx, u); err != nil {
+  		return nil, err
+  	}
+  
+  	// 3. 返回用户信息
+  	return &UserLogin{
+  		Email:    email,
+  		Username: username,
+  		Token:    uc.generateToken(username),
+  		Bio:      "Please update your bio",
+  		Image:    "default-avatar.png",
+  	}, nil
+  }
+  
+  func (uc *UserUsecase) Login(ctx context.Context, email, password string) (*UserLogin, error) {
+  	// 1. 查询用户
+  	u, err := uc.ur.GetUserByEmail(ctx, email)
+  	if err != nil {
+  		return nil, err
+  	}
+  
+  	// 2. 验证密码
+  	verifyPassword(u.PasswordHash, password)
+  	if !verifyPassword(u.PasswordHash, password) {
+  		return nil, errors.New("login failed")
+  	}
+  
+  	// 3. 返回用户信息
+  	return &UserLogin{
+  		Email:    u.Email,
+  		Username: u.Username,
+  		Token:    uc.generateToken(u.Username),
+  		Bio:      u.Bio,
+  		Image:    u.Image,
+  	}, nil
+  }
+  
+  // --------------------------------------------------------------------------------------------------
+  func hashPassword(pwd string) string {
+  	b, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
+  	if err != nil {
+  		panic(err)
+  	}
+  	return string(b)
+  }
+  
+  func verifyPassword(hashedPwd, inputPwd string) bool {
+  	if err := bcrypt.CompareHashAndPassword([]byte(hashedPwd), []byte(inputPwd)); err != nil {
+  		return false
+  	}
+  	return true
+  }
+  
+  func (uc *UserUsecase) generateToken(username string) string {
+  	return auth.GenerateToken(uc.jwtc.Token, username)
+  }
+  
+  ```
+
+  internal\data\user.go (数据库操作层)
+
+  ```go
+  
+  ```
+
+  
 
 
 

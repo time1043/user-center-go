@@ -6,21 +6,35 @@ import (
 )
 
 func (s *RealWorldService) Login(ctx context.Context, in *v1.LoginRequest) (*v1.UserReply, error) {
+	u, err := s.uc.Login(ctx, in.User.Email, in.User.Password)
+	if err != nil {
+		return nil, err
+	}
+
 	return &v1.UserReply{
 		User: &v1.UserReply_User{
-			Username: "admin",
-			Email:    "admin@admin.com",
-			Bio:      "I am a admin",
-			Image:    "https://example.com/avatar.png",
-			Token:    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODssw5c",
+			Username: u.Username,
+			Email:    u.Email,
+			Bio:      u.Bio,
+			Image:    u.Image,
+			// Token:    u.Token,
 		},
 	}, nil
 }
 
 func (s *RealWorldService) Register(ctx context.Context, req *v1.RegisterRequest) (*v1.UserReply, error) {
+	u, err := s.uc.Register(ctx, req.User.Username, req.User.Email, req.User.Password)
+	if err != nil {
+		return nil, err
+	}
+
 	return &v1.UserReply{
 		User: &v1.UserReply_User{
-			Username: "admin",
+			Username: u.Username,
+			Email:    u.Email,
+			Bio:      u.Bio,
+			Image:    u.Image,
+			Token:    u.Token,
 		},
 	}, nil
 }
