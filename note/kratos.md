@@ -213,6 +213,36 @@
 
 ### 项目设计
 
+- General functionality:
+
+  Authenticate users via JWT (login/signup pages + logout button on settings page)
+
+  CRU- users (sign up & settings page - no deleting required)
+
+  CRUD Articles
+
+  CR-D Comments on articles (no updating required)
+
+  GET and display paginated lists of articles
+
+  Favorite articles
+
+  Follow other users
+
+- 总结
+
+  用户：登录(查询)、注册(增加)；查询当前用户、查询用户列表、更新用户信息；关注用户、取关用户
+
+  文章：文章列表、文章首表；查询一篇、创建一篇、更新一篇、删除一篇
+
+  评论：在某文章里加评论(增加)、拿某文章的评论(查询)、删除某文章的评论；点赞评论、取消点赞
+
+  标签：标签列表
+
+  
+
+---
+
 - Endpoints
 
   [Authentication Header:](https://realworld-docs.netlify.app/docs/specs/backend-specs/endpoints#authentication-header), [Authentication:](https://realworld-docs.netlify.app/docs/specs/backend-specs/endpoints#authentication), [Registration:](https://realworld-docs.netlify.app/docs/specs/backend-specs/endpoints#registration)
@@ -442,21 +472,139 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 ## 项目结构与依赖注入
 
+- 依赖注入
 
+  NewApp(Server) <- NewServer(Service) <- NewService(UserUsecase) <- NewUserUsecase(UserRepo:interface) <- NewUserRepo(Data) <- NewData(DB) <- NewDB(gorm) <- config
+
+  复杂的链，需要依赖注入工具 wire (生成wire_gen.go)
+
+  分层模块，独立测试和维护 
+
+  cmd\kratos-realworld\wire_gen.go
+  
+  ```go
+  // wireApp init kratos application.
+  func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger) (*kratos.App, func(), error) {
+  	db := data.NewDB(confData)
+  	dataData, cleanup, err := data.NewData(confData, logger, db)
+  	if err != nil {
+  		return nil, nil, err
+  	}
+  	userRepo := data.NewUserRepo(dataData, logger)
+  	profileRepo := data.NewProfileRepo(dataData, logger)
+  	userUsecase := biz.NewUserUsecase(userRepo, profileRepo, logger)
+  	realWorldService := service.NewRealWorldService(userUsecase)
+  	grpcServer := server.NewGRPCServer(confServer, realWorldService, logger)
+  	httpServer := server.NewHTTPServer(confServer, realWorldService, logger)
+  	app := newApp(logger, grpcServer, httpServer)
+  	return app, func() {
+  		cleanup()
+  	}, nil
+  }
+  
+  ```
+  
+  
+
+---
+
+- 规划
+
+  social: anticle, comment - repo data
+
+  user (usecase): login, register, profile
+
+  ```bash
+  touch internal/service/social.go
+  
+  ```
+
+- service 层整理
+
+- biz 层创建 (大写 接口 定义方法)
+
+  internal\biz\social.go (internal\biz\greeter.go)
+
+  ```go
+  package biz
+  
+  import (
+  	"context"
+  
+  	"github.com/go-kratos/kratos/v2/log"
+  )
+  
+  type ArticleRepo interface {
+  }
+  
+  type CommentRepo interface {
+  }
+  
+  type TagRepo interface {
+  }
+  
+  type SocialUsecase struct {
+  	ar  ArticleRepo
+  	cr  CommentRepo
+  	tr  TagRepo
+  	log *log.Helper
+  }
+  
+  func NewSocialUsecase(ar ArticleRepo, cr CommentRepo, tr TagRepo, logger log.Logger) *SocialUsecase {
+  	return &SocialUsecase{ar: ar, cr: cr, tr: tr, log: log.NewHelper(logger)}
+  }
+  
+  func (uc *SocialUsecase) CreateArticle(ctx context.Context) error {
+  	return nil
+  }
+  
+  ```
+
+  internal\biz\user.go
+
+  ```go
+  package biz
+  
+  import (
+  	"context"
+  
+  	"github.com/go-kratos/kratos/v2/log"
+  )
+  
+  type UserRepo interface {
+  }
+  
+  type ProfileRepo interface {
+  }
+  
+  type UserUsecase struct {
+  	ur  UserRepo
+  	pr  ProfileRepo
+  	log *log.Helper
+  }
+  
+  func NewUserUsecase(ur UserRepo, pr ProfileRepo, logger log.Logger) *UserUsecase {
+  	return &UserUsecase{ur: ur, pr: pr, log: log.NewHelper(logger)}
+  }
+  
+  func (uc *UserUsecase) Register(ctx context.Context) error {
+  	return nil
+  }
+  
+  ```
+
+- data 层 (小写 实现接口)
+
+- wire
+
+  ```bash
+  make wire
+  
+  ```
+
+  
 
 
 
@@ -597,6 +745,371 @@
 
 
 
+
+# Kratos WX
+
+
+
+## 漫游指南
+
+
+
+
+
+## 工程化
+
+### 依赖注入
+
+- wire 背景
+
+  微服务框架 [**kratos v2**](https://github.com/go-kratos/kratos) 的默认项目模板中 [**kratos-layout**](https://github.com/go-kratos/kratos-layout) 中使用了 [**google/wire**](https://github.com/google/wire) 进行依赖注入
+
+  也建议开发者在维护项目时使用该工具
+
+- What
+
+  由 google 开源的一个供 Go 语言使用的依赖注入代码生成工具。它能够根据你的代码，生成相应的依赖注入 go 代码
+
+  wire 能在编译期（代码生成时）如果依赖注入有问题，在代码生成时即可报出来，不会拖到运行时才报，更便于 debug
+
+- Why
+
+  **依赖注入** (Dependency Injection)，一种代码的构造模式（就是写法），代码更加容易维护
+
+  如何发展出来的推导过程???
+
+  
+
+
+
+#### 为什么要依赖注入
+
+- 依赖注入
+
+  **依赖**是什么？此依赖是个名词，不是指软件包的依赖（node_modules），而是指软件中某一个模块（对象/实例）所依赖的其它外部模块（对象/实例）
+
+  **注入**到哪里？被依赖的模块，在创建模块时，被注入到（即当作参数传入）模块的里面
+
+
+
+- web开发场景
+
+  任务：接一个 mysql，从里面把数据按照 id 查出来
+
+  提供：`NewMySQLClient`的方法返回 client，初始化时传个地址进去就能拿到数据库连接，并有个`Exec`的方法给执行参数
+
+  ```go
+  # 伪代码 忽略了很多与主题无关的细节
+  
+  type App struct {
+      
+  }
+  
+  # 假设这个方法将会匹配并处理 GET /biu/<id> 这样的请求
+  func (a *App) GetData(id string) string {
+      # todo: write your data query
+      return "some data"
+  }
+  
+  func NewApp() *App {
+      return &App{}
+  }
+  
+  func main() {
+      app := App()
+      app.Run()
+  }
+  
+  ```
+
+- **没有 DI，通过全局变量传递依赖实例**
+
+  app 依赖了全局变量 db (严重不推荐)
+
+  db 这个对象游离在全局作用域，暴露给包下的其他模块，**比较危险** (设想如果这个包里其他代码在运行时悄悄把你的这个 db 变量替换掉会发生啥)
+
+  ```go
+  var mysqlUrl = "mysql://blabla"
+  var db = NewMySQLClient(mysqlUrl)
+  
+  
+  type App struct {
+  
+  }
+  
+  func (a *App) GetData(id string) string {
+      data := db.Exec("select data from biu where id = ? limit 1", id)
+      return data
+  }
+  
+  func NewApp() *App {
+      return &App{}
+  }
+  
+  func main() {
+      app := App()
+      app.Run()
+  }
+  
+  ```
+
+- **不用 DI，在 App 的初始化方法里创建依赖实例**
+
+  db 被塞到 app 里面了，不会有 app 之外的无关代码碰它，比较安全
+
+  这不是依赖注入，而是在内部创建了依赖 (**高耦合**)
+
+  ```go
+  type App struct {
+      db *MySQLClient
+  }
+  
+  func (a *App) GetData(id string) string {
+      data := a.db.Exec("select data from biu where id = ? limit 1", id)
+      return data
+  }
+  
+  func NewApp() *App {
+      return &App{db: NewMySQLClient(mysqlUrl)}
+  }
+  
+  func main() {
+      app := NewApp("mysql://blabla")
+      app.Run()
+  }
+  ```
+
+  
+
+---
+
+- 新任务：数据改从 Redis 里读 (Postgres ...)
+
+  1. App 初始化方法里改成了初始化 RedisClient
+  2. get_data 里取数据时改用 run 方法，并且查询语句也换了
+  3. App 实例化时传入的参数改成了 redis 地址
+
+  ```go
+  type App struct {
+      ds *RedisClient
+  }
+  
+  func (a *App) GetData(id string) string {
+      data := a.ds.Do("GET", "biu_"+id)
+      return data
+  }
+  
+  
+  func NewApp() *App {
+      return &App{ds: NewRedisClient(redisAddr)}
+  }
+  
+  func main() {
+      app := NewApp("redis://ooo")
+      app.Run()
+  }
+  
+  ```
+
+- **面向接口interface编程** (不是面向具体实现编程)
+
+  预料到数据源的实现，很有可能被更换，因此在一开始就应该做好设计
+
+  > 设计接口 (duck-typing)
+  >
+  > 不论是 Mysql 实现还是 Redis 实现，他们都有个共同的功能：用一个 id，查一个数据出来，那么这就是共同的接口
+  >
+  > 约定一个叫 DataSource 的接口，它必须有一个方法叫 GetById，功能是要接收一个 id，返回一个字符串
+  >
+  > 在 App 里处理请求的部分就可以稳定地调用 GetById 这个方法，而底层数据实现只要实现了 DataSource 这个 interface 就能花式替换，不用改 App 内部的代码了
+
+  由于两种数据源都实现了 DataSource 接口，因此可以直接创建一个塞到 App 里面了，想用哪个用哪个
+
+  ```go
+  // 设计接口：GetById(id) -> string
+  type DataSource interface {
+      GetById(id string) string
+  }
+  
+  
+  // 封装个redis
+  type redis struct {
+      r *RedisClient
+  }
+  
+  func NewRedis(addr string) *redis {
+      return &redis{db: NewRedisClient(addr)}
+  }
+  
+  func (r *redis) GetById(id string) string {
+      return r.r.Do("GET", "biu_"+id)
+  }
+  
+  
+  // 再封装个mysql
+  type mysql struct {
+      m *MySQLClient
+  }
+  
+  func NewMySQL(addr string) *redis {
+      return &mysql{db: NewMySQLClient(addr)}
+  }
+  
+  func (m *mysql) GetById(id string) string {
+      return r.m.Exec("select data from biu where id = ? limit 1", id)
+  }
+  
+  
+  type App struct {
+      ds DataSource
+  }
+  
+  func NewApp(addr string) *App {
+      //需要用Mysql的时候
+      return &App{ds: NewMySQLClient(addr)}
+  
+      //需要用Redis的时候
+      return &App{ds: NewRedisClient(addr)}
+  }
+  
+  
+  ```
+
+  
+
+---
+
+- 中间件的连接有一堆参数
+
+  配在一个 yaml 文件里，需要解析到一个 struct 里面，然后再传给对应的 New 方法
+
+  yaml 
+
+  ```yaml
+  redis:
+      addr: 127.0.0.1:6379
+      read_timeout: 0.2s
+      write_timeout: 0.2s
+  ```
+
+  struct 
+
+  ```go
+  type RedisConfig struct {
+   Network      string             `json:"network,omitempty"`
+   Addr         string             `json:"addr,omitempty"`
+   ReadTimeout  *duration.Duration `json:"read_timeout,omitempty"`
+   WriteTimeout *duration.Duration `json:"write_timeout,omitempty"`
+  }
+  ```
+
+  NewApp
+
+  ```go
+  func NewApp() *App {
+      var conf *RedisConfig
+      yamlFile, err := ioutil.ReadFile("redis_conf.yaml")
+      if err != nil {
+          panic(err)
+      }
+      err = yaml.Unmarshal(yamlFile, &conf)
+      if err != nil {
+          panic(err)
+      }
+      return &App{ds: NewRedisClient(conf)}
+  }
+  ```
+
+- 模块分工 (不断往上抽)
+
+  依赖注入：在创建模块时，被注入到（即当作参数传入）初始化函数里面
+
+  `NewRedis(conf) -> DataSource` 不需要关心文件是怎么读的
+
+  `NewApp(DataSource) -> App` 不想关心你这配置文件是通过网络请求拿来的还是从本地磁盘读的 
+
+  可以通过实现 DataSource 接口，更换读取配置文件的方法，和更换创建 DataSource 的方法，来任意修改底层实现（读配置文件的实现，和用哪种 DataSource 来查数据）
+
+  ```go
+  func GetRedisConf() *RedisConfig
+  func NewRedis(conf *RedisConfig) DataSource
+  
+  func NewApp(ds DataSource) *App {
+      return &App{ds: ds}
+  }
+  
+  func initApp() *App {
+      c := GetRedisConf()
+      r := NewRedis(c)
+      app := NewApp(r)
+      return app
+  }
+  
+  func main() {
+      app := initApp()
+      app.Run()
+  }
+  ```
+
+  
+
+
+
+#### 如何实现依赖注入
+
+- 注入依赖的过程
+
+  把各个实例初始化好，再按照各个初始化方法的需求塞进去，最终构造出 app 
+
+- 手工依赖注入 (麻烦)
+
+  一旦你要维护的东西多了 ...
+
+  `UserService(pg *Postgres, mm *Memcached)`
+
+  `NewApp(r *Redis, es *ES, us *UserSerivce, db *MySQL) *App`
+
+- wire 
+
+  他的功能只是通过生成代码**帮你注入依赖**
+
+  而实际的依赖实例需要你自己创建（初始化）
+
+  
+
+---
+
+- 如何用 wire 实现依赖注入
+
+  wire.go 
+
+  > 定义好 Injector (`initApp`) 
+  >
+  > 然后分别实现好 Provider
+
+  ```go
+  // +build wireinject
+  
+  func initApp() (*App) {
+   panic(wire.Build(GetRedisConf, NewRedis, SomeProviderSet, NewApp))
+  }
+  ```
+
+  执行命令 wire
+
+  扫描整个项目，并帮你生成一个`wire_gen.go`文件，如果有什么没有实现好，会报错出来
+
+
+
+
+
+
+
+
+
+
+
+## 微服务框架
 
 
 
