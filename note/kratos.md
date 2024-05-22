@@ -14,6 +14,8 @@
 
   [Ent 数据库框架使用](https://go-kratos.dev/docs/guide/ent), [gorm docs](https://gorm.io/docs/), 
 
+  [jwt](https://jwt.io/), 
+  
   
 
 
@@ -476,12 +478,20 @@
 
 - 依赖注入
 
-  NewApp(Server) <- NewServer(Service) <- NewService(UserUsecase) <- NewUserUsecase(UserRepo:interface) <- NewUserRepo(Data) <- NewData(DB) <- NewDB(gorm) <- config
-
+  ```
+  NewApp(Server)                          cmd/kratos-realworld/main.go       
+  <- NewServer(Service)                   internal/server/server.go          var ProviderSet = wire.NewSet(NewGRPCServer, NewHTTPServer)
+  <- NewService(UserUsecase)              internal/service/service.go        var ProviderSet = wire.NewSet(NewRealWorldService)
+  <- NewUserUsecase(UserRepo:interface)   internal/biz/user.go               var ProviderSet = wire.NewSet(NewSocialUsecase, NewUserUsecase)
+  <- NewUserRepo(Data)                    internal/data/user.go              
+  <- NewData(DB)                          internal/data/data.go              var ProviderSet = wire.NewSet(NewData, NewDB, NewUserRepo, NewProfileRepo)
+  <- NewDB(gorm)                          internal/data/data.go
+  <- config                               configs/config.yaml(配置信息)  conf/conf.proto(定义结构)  conf/conf.pb.go(代码生成)
+  
   复杂的链，需要依赖注入工具 wire (生成wire_gen.go)
-
   分层模块，独立测试和维护 
-
+  ```
+  
   cmd\kratos-realworld\wire_gen.go
   
   ```go
@@ -521,9 +531,166 @@
   
   ```
 
-- service 层整理
+- service 层整理 (前次生成代码的分包)
+
+  internal\service\service.go
+
+  ```go
+  package service
+  
+  import (
+  	v1 "kratos-realworld/api/realworld/v1"
+  	"kratos-realworld/internal/biz"
+  
+  	"github.com/google/wire"
+  )
+  
+  // ProviderSet is service providers.
+  var ProviderSet = wire.NewSet(NewRealWorldService)
+  
+  // GreeterService is a greeter service.
+  type RealWorldService struct {
+  	v1.UnimplementedRealWorldServer
+  
+  	uc *biz.UserUsecase
+  }
+  
+  // NewGreeterService new a greeter service.
+  func NewRealWorldService(uc *biz.UserUsecase) *RealWorldService {
+  	return &RealWorldService{uc: uc}
+  }
+  
+  ```
+
+  internal\service\social.go
+
+  ```go
+  package service
+  
+  import (
+  	"context"
+  	v1 "kratos-realworld/api/realworld/v1"
+  )
+  
+  // --------------------------------------------------------------------------------------------------
+  func (s *RealWorldService) GetProfile(ctx context.Context, req *v1.GetProfileRequest) (*v1.ProfileReply, error) {
+  	return &v1.ProfileReply{}, nil
+  }
+  
+  func (s *RealWorldService) FollowUser(ctx context.Context, req *v1.FollowUserRequest) (*v1.ProfileReply, error) {
+  	return &v1.ProfileReply{}, nil
+  }
+  
+  func (s *RealWorldService) UnfollowUser(ctx context.Context, req *v1.UnfollowUserRequest) (*v1.ProfileReply, error) {
+  	return &v1.ProfileReply{}, nil
+  }
+  
+  // --------------------------------------------------------------------------------------------------
+  func (s *RealWorldService) ListArticles(ctx context.Context, req *v1.ListArticlesRequest) (*v1.MultipleArticlesReply, error) {
+  	return &v1.MultipleArticlesReply{}, nil
+  }
+  
+  func (s *RealWorldService) FeedArticles(ctx context.Context, req *v1.FeedArticlesRequest) (*v1.MultipleArticlesReply, error) {
+  	return &v1.MultipleArticlesReply{}, nil
+  }
+  
+  func (s *RealWorldService) GetArticle(ctx context.Context, req *v1.GetArticleRequest) (*v1.SingleArticleReply, error) {
+  	return &v1.SingleArticleReply{}, nil
+  }
+  
+  func (s *RealWorldService) CreateArticle(ctx context.Context, req *v1.CreateArticleRequest) (*v1.SingleArticleReply, error) {
+  	return &v1.SingleArticleReply{}, nil
+  }
+  
+  func (s *RealWorldService) UpdateArticle(ctx context.Context, req *v1.UpdateArticleRequest) (*v1.SingleArticleReply, error) {
+  	return &v1.SingleArticleReply{}, nil
+  }
+  
+  func (s *RealWorldService) DeleteArticle(ctx context.Context, req *v1.DeleteArticleRequest) (*v1.EmptyReply, error) {
+  	return &v1.EmptyReply{}, nil
+  }
+  
+  // --------------------------------------------------------------------------------------------------
+  func (s *RealWorldService) AddComment(ctx context.Context, req *v1.AddCommentRequest) (*v1.SingleCommentReply, error) {
+  	return &v1.SingleCommentReply{}, nil
+  }
+  
+  func (s *RealWorldService) GetComments(ctx context.Context, req *v1.GetCommentsRequest) (*v1.MultipleCommentsReply, error) {
+  	return &v1.MultipleCommentsReply{}, nil
+  }
+  
+  func (s *RealWorldService) DeleteComment(ctx context.Context, req *v1.DeleteCommentRequest) (*v1.EmptyReply, error) {
+  	return &v1.EmptyReply{}, nil
+  }
+  
+  func (s *RealWorldService) FavoriteArticle(ctx context.Context, req *v1.FavoriteArticleRequest) (*v1.SingleArticleReply, error) {
+  	return &v1.SingleArticleReply{}, nil
+  }
+  
+  func (s *RealWorldService) UnfavoriteArticle(ctx context.Context, req *v1.UnfavoriteArticleRequest) (*v1.SingleArticleReply, error) {
+  	return &v1.SingleArticleReply{}, nil
+  }
+  
+  // --------------------------------------------------------------------------------------------------
+  func (s *RealWorldService) GetTags(ctx context.Context, req *v1.GetTagsRequest) (*v1.TagListReply, error) {
+  	return &v1.TagListReply{}, nil
+  }
+  
+  ```
+
+  internal\service\user.go
+
+  ```go
+  package service
+  
+  import (
+  	"context"
+  	v1 "kratos-realworld/api/realworld/v1"
+  )
+  
+  func (s *RealWorldService) Login(ctx context.Context, in *v1.LoginRequest) (*v1.UserReply, error) {
+  	return &v1.UserReply{
+  		User: &v1.UserReply_User{
+  			Username: "admin",
+  			Email:    "admin@admin.com",
+  			Bio:      "I am a admin",
+  			Image:    "https://example.com/avatar.png",
+  			Token:    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODssw5c",
+  		},
+  	}, nil
+  }
+  
+  func (s *RealWorldService) Register(ctx context.Context, req *v1.RegisterRequest) (*v1.UserReply, error) {
+  	return &v1.UserReply{
+  		User: &v1.UserReply_User{
+  			Username: "admin",
+  		},
+  	}, nil
+  }
+  
+  func (s *RealWorldService) GetCurrentUser(ctx context.Context, req *v1.GetCurrentUserRequest) (*v1.UserReply, error) {
+  	return &v1.UserReply{}, nil
+  }
+  
+  func (s *RealWorldService) UpdateUser(ctx context.Context, req *v1.UpdateUserRequest) (*v1.UserReply, error) {
+  	return &v1.UserReply{}, nil
+  }
+  
+  ```
 
 - biz 层创建 (大写 接口 定义方法)
+
+  internal\biz\biz.go
+
+  ```go
+  package biz
+  
+  import "github.com/google/wire"
+  
+  // ProviderSet is biz providers.
+  var ProviderSet = wire.NewSet(NewSocialUsecase, NewUserUsecase)
+  
+  ```
 
   internal\biz\social.go (internal\biz\greeter.go)
 
@@ -536,6 +703,7 @@
   	"github.com/go-kratos/kratos/v2/log"
   )
   
+  // --------------------------------------------------------------------------------------------------
   type ArticleRepo interface {
   }
   
@@ -556,6 +724,7 @@
   	return &SocialUsecase{ar: ar, cr: cr, tr: tr, log: log.NewHelper(logger)}
   }
   
+  // --------------------------------------------------------------------------------------------------
   func (uc *SocialUsecase) CreateArticle(ctx context.Context) error {
   	return nil
   }
@@ -573,7 +742,13 @@
   	"github.com/go-kratos/kratos/v2/log"
   )
   
+  type User struct {
+  	Username string
+  }
+  
+  // --------------------------------------------------------------------------------------------------
   type UserRepo interface {
+  	CreateUser(ctx context.Context, user *User) error
   }
   
   type ProfileRepo interface {
@@ -589,13 +764,109 @@
   	return &UserUsecase{ur: ur, pr: pr, log: log.NewHelper(logger)}
   }
   
-  func (uc *UserUsecase) Register(ctx context.Context) error {
+  // --------------------------------------------------------------------------------------------------
+  func (uc *UserUsecase) Register(ctx context.Context, u *User) error {
+  	err := uc.ur.CreateUser(ctx, u)
+  	if err != nil {
+  
+  	}
+  
   	return nil
   }
   
   ```
 
 - data 层 (小写 实现接口)
+
+  internal\data\data.go
+
+  ```go
+  package data
+  
+  import (
+  	"kratos-realworld/internal/conf"
+  
+  	"github.com/go-kratos/kratos/v2/log"
+  	"github.com/google/wire"
+  	"gorm.io/driver/mysql"
+  	"gorm.io/gorm"
+  )
+  
+  // ProviderSet is data providers.
+  var ProviderSet = wire.NewSet(NewData, NewDB, NewUserRepo, NewProfileRepo)
+  
+  // Data .
+  type Data struct {
+  	// TODO wrapped database client
+  	db *gorm.DB
+  }
+  
+  // NewData
+  func NewData(c *conf.Data, logger log.Logger, db *gorm.DB) (*Data, func(), error) {
+  	cleanup := func() {
+  		log.NewHelper(logger).Info("closing the data resources")
+  	}
+  	return &Data{db: db}, cleanup, nil
+  }
+  
+  func NewDB(c *conf.Data) *gorm.DB {
+  	db, err := gorm.Open(mysql.Open(c.Database.Dsn), &gorm.Config{})
+  	if err != nil {
+  		panic("failed to connect database")
+  	}
+  
+  	if err := db.AutoMigrate(); err != nil {
+  		panic(err)
+  	}
+  	return db
+  }
+  
+  ```
+
+  internal\data\user.go
+
+  ```go
+  package data
+  
+  import (
+  	"context"
+  
+  	"kratos-realworld/internal/biz"
+  
+  	"github.com/go-kratos/kratos/v2/log"
+  )
+  
+  // --------------------------------------------------------------------------------------------------
+  type userRepo struct {
+  	data *Data
+  	log  *log.Helper
+  }
+  
+  type ProfileRepo struct {
+  	data *Data
+  	log  *log.Helper
+  }
+  
+  func NewUserRepo(data *Data, logger log.Logger) biz.UserRepo {
+  	return &userRepo{
+  		data: data,
+  		log:  log.NewHelper(logger),
+  	}
+  }
+  
+  func NewProfileRepo(data *Data, logger log.Logger) biz.ProfileRepo {
+  	return &ProfileRepo{
+  		data: data,
+  		log:  log.NewHelper(logger),
+  	}
+  }
+  
+  // --------------------------------------------------------------------------------------------------
+  func (r *userRepo) CreateUser(ctx context.Context, user *biz.User) error {
+  	return nil
+  }
+  
+  ```
 
 - wire
 
@@ -608,37 +879,179 @@
 
 
 
+## biz层开发 和自定义中间件
 
+- 需求
 
+  不能明文存储用户密码 [golang.org/x/crypto bcrypt](https://pkg.go.dev/golang.org/x/crypto)
+  
+  ```bash
+  go get golang.org/x/crypto
+  go get github.com/golang-jwt/jwt/v4
+  
+  ```
+  
+- internal\biz\user.go
 
+  ```go
+  package biz
+  
+  import (
+  	"context"
+  	"errors"
+  
+  	"github.com/go-kratos/kratos/v2/log"
+  	"golang.org/x/crypto/bcrypt"
+  )
+  
+  type User struct {
+  	Email        string
+  	Username     string
+  	Bio          string
+  	Image        string
+  	PasswordHash string // 数据库不能明文存储密码
+  }
+  
+  type UserLogin struct {
+  	Email    string
+  	Username string
+  	Token    string
+  	Bio      string
+  	Image    string
+  }
+  
+  // --------------------------------------------------------------------------------------------------
+  type UserRepo interface {
+  	CreateUser(ctx context.Context, user *User) error
+  	GetUserByEmail(ctx context.Context, email string) (*User, error)
+  }
+  
+  type ProfileRepo interface {
+  }
+  
+  type UserUsecase struct {
+  	ur  UserRepo
+  	pr  ProfileRepo
+  	log *log.Helper
+  }
+  
+  func NewUserUsecase(ur UserRepo, pr ProfileRepo, logger log.Logger) *UserUsecase {
+  	return &UserUsecase{ur: ur, pr: pr, log: log.NewHelper(logger)}
+  }
+  
+  // --------------------------------------------------------------------------------------------------
+  func (uc *UserUsecase) Register(ctx context.Context, username, email, password string) (*UserLogin, error) {
+  	// 1. 参数校验 TODO
+  
+  	// 2. 创建用户 (加密密码)
+  	u := &User{
+  		Email:        email,
+  		Username:     username,
+  		PasswordHash: hashPassword(password),
+  	}
+  	if err := uc.ur.CreateUser(ctx, u); err != nil {
+  		return nil, err
+  	}
+  
+  	// 3. 返回用户信息
+  	return &UserLogin{
+  		Email:    email,
+  		Username: username,
+  		Token:    "xxx",
+  		Bio:      "xx",
+  		Image:    "x",
+  	}, nil
+  }
+  
+  func (uc *UserUsecase) Login(ctx context.Context, email, password string) (*UserLogin, error) {
+  	// 1. 查询用户
+  	u, err := uc.ur.GetUserByEmail(ctx, email)
+  	if err != nil {
+  		return nil, err
+  	}
+  
+  	// 2. 验证密码
+  	verifyPassword(u.PasswordHash, password)
+  	if !verifyPassword(u.PasswordHash, password) {
+  		return nil, errors.New("login failed")
+  	}
+  
+  	// 3. 返回用户信息
+  	return &UserLogin{
+  		Email:    u.Email,
+  		Username: u.Username,
+  		Token:    "xxx",
+  		Bio:      u.Bio,
+  		Image:    u.Image,
+  	}, nil
+  }
+  
+  // --------------------------------------------------------------------------------------------------
+  func hashPassword(pwd string) string {
+  	b, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.DefaultCost)
+  	if err != nil {
+  		panic(err)
+  	}
+  	return string(b)
+  }
+  
+  func verifyPassword(hashedPwd, inputPwd string) bool {
+  	if err := bcrypt.CompareHashAndPassword([]byte(hashedPwd), []byte(inputPwd)); err != nil {
+  		return false
+  	}
+  	return true
+  }
+  
+  ```
 
+  internal\biz\user_test.go
 
+  ```go
+  package biz
+  
+  import (
+  	"testing"
+  
+  	"github.com/stretchr/testify/assert"
+  )
+  
+  func TestHashPasswork(t *testing.T) {
+  	s := hashPassword("123456")
+  	t.Log(s)                        // 输出加密后的密码
+  	assert.NotEqual(t, s, "123456") // 加密后的密码不等于原始密码
+  }
+  
+  func TestVerifyPassword(t *testing.T) {
+  	hashPwd := "$2a$10$C.EFL6UY9NewoPSUd6bCeuJs0/ihHdGfgIb0q5hceB35CUm68Iu3C"
+  	assert.True(t, verifyPassword(hashPwd, "123456"))
+  	assert.False(t, verifyPassword(hashPwd, "1234567"))
+  }
+  
+  ```
 
+  internal\data\user.go
 
+  ```go
+  
+  ```
 
+  
 
+---
 
+- Middleware  [Kratos docs](https://go-kratos.dev/docs/component/middleware/overview) 
 
+  Kratos service Middleware (http, gprc)
 
+  http Filter mux
 
+  gprc unaryinterceptor
 
-## biz层开发和中间件
+- 实现步骤
 
+  internal\server\http.go (需要注册服务)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-## 自定义中间件
+  internal\pkg\middleware\auth (中间件存放)
 
 
 
