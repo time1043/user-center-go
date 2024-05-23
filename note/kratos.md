@@ -892,6 +892,8 @@
   go get github.com/golang-jwt/jwt/v4
   go get github.com/davecgh/go-spew
   
+  go get github.com/gorilla/handlers  # 跨域
+  
   ```
   
 - internal\biz\user.go
@@ -1042,13 +1044,13 @@
 
 ---
 
-### 自定义中间件
+### 自定义中间件 (用户鉴权)
 
-- Middleware  [Kratos docs](https://go-kratos.dev/docs/component/middleware/overview) 
+- Middleware  
 
-  Kratos service Middleware (http, gprc)
+  Kratos service [Middleware](https://go-kratos.dev/docs/component/middleware/overview) (http, gprc)
 
-  http Filter mux
+  http [Filter](https://go-kratos.dev/docs/component/transport/http) mux
 
   gprc unaryinterceptor
 
@@ -1207,18 +1209,6 @@
   ```
   make wire
   
-  ```
-
-  internal\server\http.go
-
-  ```go
-  func NewHTTPServer(c *conf.Server, jwtc *conf.Jtw, greeter *service.RealWorldService, logger log.Logger) *http.Server {
-  	var opts = []http.ServerOption{
-  		http.Middleware(
-  			recovery.Recovery(),
-  			auth.JTWAuthMiddleware(jwtc.Token),
-  		),
-  	}
   ```
 
   ...
@@ -1431,23 +1421,33 @@
 
 
 
+### HTTP中间件自定义 (CORS)
 
+- CORS  [mdn cors](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/CORS)  [demo](https://github.com/go-kratos/beer-shop/blob/b12402ebc618c4563e69757e65a6db4dd767a869/app/shop/interface/internal/server/http.go#L21)
 
+  浏览器 跨域请求
 
+- 代码实现
 
+  internal\server\http.go
 
+  ```go
+  func NewHTTPServer(c *conf.Server, jwtc *conf.JWT, greeter *service.RealWorldService, logger log.Logger) *http.Server {
+  	var opts = []http.ServerOption{
+  		http.Middleware(
+  			recovery.Recovery(),
+  			selector.Server(auth.JWTAuthMiddleware(jwtc.Token)).Match(NewskipRoutersMatcher()).Build(),
+  		),
+  		http.Filter(
+  			handlers.CORS(
+  				handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}),
+  				handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}),
+  				handlers.AllowedOrigins([]string{"*"}),
+  			),
+  		),
+  ```
 
-
-
-
-
-
-
-
-
-## CORS和HTTP中间件自定义
-
-
+  
 
 
 

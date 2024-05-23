@@ -11,6 +11,7 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/selector"
 	"github.com/go-kratos/kratos/v2/transport/http"
+	"github.com/gorilla/handlers"
 )
 
 // NewHTTPServer new an HTTP server.
@@ -18,8 +19,14 @@ func NewHTTPServer(c *conf.Server, jwtc *conf.JWT, greeter *service.RealWorldSer
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
-			// auth.JWTAuthMiddleware(jwtc.Token),  // 需要分流
 			selector.Server(auth.JWTAuthMiddleware(jwtc.Token)).Match(NewskipRoutersMatcher()).Build(),
+		),
+		http.Filter(
+			handlers.CORS(
+				handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"}),
+				handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"}),
+				handlers.AllowedOrigins([]string{"*"}),
+			),
 		),
 	}
 	if c.Http.Network != "" {
