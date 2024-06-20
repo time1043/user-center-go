@@ -1451,21 +1451,11 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 ## HTTP错误返回结构
 
+- 自定义错误返回 [kratos](https://go-kratos.dev/docs/component/errors)
 
+  
 
 
 
